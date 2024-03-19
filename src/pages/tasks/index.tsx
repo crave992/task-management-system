@@ -4,10 +4,13 @@ import MainLayout from '@/components/layouts/MainLayout';
 import CreateTaskForm from '@/components/forms/CreateTask';
 import { Button, Typography, Paper, Table, TableHead, TableRow, TableCell, TableBody, TableSortLabel, TableFooter, TablePagination } from '@mui/material';
 import FormDialog from '@/components/dialogs/FormDialog';
+import EditTask from '@/components/forms/EditTask'; // Import EditTask component
 
 const TasksPage: React.FC = () => {
   const [tasks, setTasks] = useState<any[]>([]);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false); // State for create task dialog
+  const [openEditDialog, setOpenEditDialog] = useState(false); // State for edit task dialog
+  const [editTask, setEditTask] = useState<any>(null); // State for task to be edited
   const [orderBy, setOrderBy] = useState('created_at'); // Default orderBy to 'created_at'
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
@@ -30,12 +33,12 @@ const TasksPage: React.FC = () => {
     fetchTasks();
   }, []);
 
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
+  const handleOpenCreateDialog = () => {
+    setOpenCreateDialog(true);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
+  const handleCloseCreateDialog = () => {
+    setOpenCreateDialog(false);
   };
 
   const handleCreateTask = async (newTask: any) => {
@@ -65,6 +68,45 @@ const TasksPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error creating task:', error);
+    }
+  };
+
+  const handleOpenEditDialog = (task: any) => {
+    setEditTask(task); // Set the task to be edited
+    setOpenEditDialog(true); // Open the edit dialog
+  };
+
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false); // Close the edit dialog
+  };
+
+  const handleUpdateTask = async (updatedTask: any) => {
+    try {
+      // Update the task
+      const response = await fetch(`/api/tasks/edit?id=${updatedTask.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTask),
+      });
+
+      if (response.ok) {
+        // If task update is successful, fetch the updated list of tasks from the API
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          const userId = parsedUser.user_id;
+          
+          const tasksResponse = await fetch(`/api/tasks/${userId}`);
+          const tasksData = await tasksResponse.json();
+          setTasks(tasksData.tasks || []); // Update tasks state with the updated list
+        }
+      } else {
+        console.error('Failed to update task');
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
     }
   };
 
@@ -132,12 +174,12 @@ const TasksPage: React.FC = () => {
             <Typography variant="h1" align="center" gutterBottom>
               Task Page
             </Typography>
-            <Button onClick={handleOpenDialog} variant="outlined" color="primary">
+            <Button onClick={handleOpenCreateDialog} variant="outlined" color="primary">
               Create Task
             </Button>
           </div>
-          <Paper>
-            <Table>
+          <Paper className="overflow-x-auto">
+            <Table className="min-w-full">
               <TableHead>
                 <TableRow>
                   <TableCell>
@@ -208,11 +250,15 @@ const TasksPage: React.FC = () => {
                     <TableCell>{formatDate(task.due_date)}</TableCell> {/* Format due_date */}
                     <TableCell>{formatDate(task.created_at)}</TableCell> {/* Format created_at */}
                     <TableCell>
-                      <Button variant="outlined" color="error" onClick={() => handleRemoveTask(task.task_id)}>
-                        Remove
-                      </Button>
+                      <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
+                        <Button variant="outlined" color="success" onClick={() => handleOpenEditDialog(task)}>
+                          Edit
+                        </Button>
+                        <Button variant="outlined" color="error" onClick={() => handleRemoveTask(task.task_id)}>
+                          Remove
+                        </Button>
+                      </div>
                     </TableCell>
-                    {/* Add more table cells for additional task properties */}
                   </TableRow>
                 ))}
               </TableBody>
@@ -232,9 +278,16 @@ const TasksPage: React.FC = () => {
             </Table>
           </Paper>
         </div>
-        <FormDialog open={openDialog} onClose={handleCloseDialog} title="Create Task">
+        <FormDialog open={openCreateDialog} onClose={handleCloseCreateDialog} title="Create Task">
           <CreateTaskForm onCreateTask={handleCreateTask} />
         </FormDialog>
+        {/* Edit Task Dialog */}
+        <EditTask
+          open={openEditDialog}
+          onClose={handleCloseEditDialog}
+          task={editTask}
+          onUpdateTask={handleUpdateTask}
+        />
       </MainLayout>
     </AuthGuard>
   );
