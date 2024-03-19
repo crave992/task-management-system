@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import Head from 'next/head';
-import styles from '../styles/Home.module.css';
+import styles from '../styles/Home.module.scss';
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,25 +26,15 @@ export default function Home() {
           </p>
 
           <div className={styles.grid}>
-            <a href="#" className={styles.card}>
-              <h3>Create Task &rarr;</h3>
-              <p>Create new tasks quickly and easily.</p>
-            </a>
+            <Link href="/login" className={styles.card}>
+              <h3>Login &rarr;</h3>
+              <p>Login to create new tasks quickly and easily.</p>
+            </Link>
 
-            <a href="#" className={styles.card}>
-              <h3>Manage Tasks &rarr;</h3>
-              <p>Effortlessly manage your tasks.</p>
-            </a>
-
-            <a href="#" className={styles.card}>
-              <h3>Track Progress &rarr;</h3>
-              <p>Track your progress and stay on top of your goals.</p>
-            </a>
-
-            <a href="#" className={styles.card}>
-              <h3>Collaborate &rarr;</h3>
-              <p>Collaborate with your team seamlessly.</p>
-            </a>
+            <Link href="/sign-up" className={styles.card}>
+              <h3>Sign Up &rarr;</h3>
+              <p>Sign up to effortlessly manage your tasks.</p>
+            </Link>
           </div>
         </main>
 
